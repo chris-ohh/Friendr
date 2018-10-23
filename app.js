@@ -3,11 +3,26 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var mongoose = require('mongoose');
+
+var User = require('./models/User');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
 var app = express();
+
+/**
+ * Connect to MongoDB.
+ */
+mongoose.connect(process.env.MONGODB, {
+    useMongoClient: true
+});
+mongoose.connection.on('error', function () {
+    console.log('MongoDB Connection Error. Please make sure that MongoDB is running.');
+    process.exit(1);
+});
+mongoose.set('debug', true);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
