@@ -3,6 +3,8 @@ var mongoose = require('mongoose');
 var _ = require('lodash');
 var mongoosePaginate = require('mongoose-paginate');
 
+var Schema = mongoose.Schema;
+
 var profileSchema = new mongoose.Schema({
   // more fields
     description: String,
@@ -24,10 +26,24 @@ var userSchema = new mongoose.Schema({
     status: {type: String, default: "active"},
 
     profile: [profileSchema],
-    friends: [{type: Schema.Types.ObjectId, ref: 'User'}],
-    blocked: [{type: Schema.Types.ObjectId, ref: 'User'}],
+    friends: [{type: Schema.Types.ObjectId, ref: 'Friends'}],
+    //blocked: [{type: Schema.Types.ObjectId, ref: 'User'}],
 
-}, {timestamps: true, toObject: {virtuals: true}, toJSON: {virtuals: true}});
+}, {timestamps: true});
+
+var friendsSchema = new mongoose.Schema({
+    requester: { type: Schema.Types.ObjectId, ref: 'User'},
+    recipient: { type: Schema.Types.ObjectId, ref: 'User'},
+    status: {
+      type: Number,
+      enums: [
+          0,    //'add friend',
+          1,    //'requested',
+          2,    //'pending',
+          3,    //'friends'
+      ]
+    }
+}, {timestamps: true });
 
 /**
  * Password hash middleware.
@@ -54,6 +70,7 @@ userSchema.pre('save', function (next) {
 userSchema.plugin(mongoosePaginate);
 
 var User = mongoose.model('User', userSchema);
+var Friends = mongoose.model('Friends', friendsSchema);
 
 
 module.exports = User;

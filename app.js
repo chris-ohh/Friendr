@@ -15,7 +15,7 @@ var app = express();
 /**
  * Connect to MongoDB.
  */
-mongoose.connect(process.env.MONGODB, {
+mongoose.connect('mongodb://127.0.0.1:27017/friendr', {
     useMongoClient: true
 });
 mongoose.connection.on('error', function () {
