@@ -10,7 +10,6 @@ const {
 
 // import the user type we created
 const UserType = require('../types/User');
-const AddressType = require('../types/Address');
 
 // import the user resolver we created
 const UserResolver = require('../resolvers/User');
@@ -55,23 +54,4 @@ module.exports = {
             }
 		}
 	},
-
-    userAddress() {
-		return {
-			type: AddressType,
-			description: 'This will return current user profile details',
-            args: {
-                id: {
-                    type: new GraphQLNonNull(GraphQLID),
-                    description: 'Please enter address id',
-                }
-            },
-			resolve(parent, args, context, info){
-                if (auth.isAuthenticated(context)) {
-                	return context.user.address.id(args.id);
-                }
-            }
-		}
-	},
-
 };
