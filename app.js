@@ -1,11 +1,15 @@
 var createError = require('http-errors');
 var express = require('express');
+var bodyParser = require('body-parser');
 var path = require('path');
-var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var mongoose = require('mongoose');
+const moment = require('moment');
+var expressGraphQL = require('express-graphql');
+const jwt = require('express-jwt');
 
 var User = require('./models/User');
+var GraphQLSchema = require('./graphql');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -24,33 +28,49 @@ mongoose.connection.on('error', function () {
 });
 mongoose.set('debug', true);
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'pug');
+/**
+ * Express configuration.
+ */
+app.set('port', 3000);
 
 app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true, parameterLimit: 5000}));
+app.use(bodyParser.json({limit: '50mb'}));
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
-});
+/**
+ * GraphQL server
+ */
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+ app.use('/graphql', jwt({
+     secret: 'adfasdf',
+     requestProperty: 'auth',
+     credentialsRequired: false,
+ }));
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
+ // =========== GraphQL setting  ========== //
+ app.use('/graphql', async (req, res, done) => {
+     var userId = (req.auth && req.auth.id ) ? req.auth.id : undefined;
+     const user = ( userId ) ? await User.findById(userId): undefined;
+     req.context = {
+         user: user,
+     }
+     done();
+ });
+
+ app.use('/graphql', expressGraphQL(req => ({
+         schema: GraphQLSchema,
+         context: req.context,
+         graphiql: 'development',
+     })
+ ));
+ // =========== GraphQL setting END ========== //
+
+ /**
+  * Start Express server.
+  */
+ app.listen(app.get('port'), function () {
+     console.log('Express server listening on port %d', app.get('port'));
+ });
 
 module.exports = app;
